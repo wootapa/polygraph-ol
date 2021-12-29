@@ -1,0 +1,6 @@
+.*
+!/.eslintrc.json
+!/.gitignore
+/node_modules/
+/dist/
+/package-lock.json
