@@ -12,7 +12,7 @@ const banner = `/*! ${pkg.name} v${pkg.version} | author:${pkg.author} | license
 export default [
     {
         input: 'src/polygraph.ol.ts',
-        external: ['ol', 'ol/proj', 'ol/extent', 'ol/geom/Geometry', 'ol/geom/MultiPolygon', 'ol/geom/Polygon', 'ol/geom/MultiLineString', 'ol/geom/LineString', 'ol/geom/LinearRing', 'ol/geom/MultiPoint', 'ol/geom/Point', 'ol/geom/Circle',  'ol/format/GML3', 'ol/format/WKT', 'ol/format/GeoJSON'],
+        external: ['rbush', 'ol', 'ol/proj', 'ol/extent', 'ol/geom/Geometry', 'ol/geom/MultiPolygon', 'ol/geom/Polygon', 'ol/geom/MultiLineString', 'ol/geom/LineString', 'ol/geom/LinearRing', 'ol/geom/MultiPoint', 'ol/geom/Point', 'ol/geom/Circle',  'ol/format/GML3', 'ol/format/WKT', 'ol/format/GeoJSON'],
         plugins: [
             cleaner({ targets: ['./dist/'] }),
             copy({ targets: [{ src: 'index.html', dest: 'dist' }] }),
@@ -31,6 +31,7 @@ export default [
             {
                 file: pkg.main, format: 'umd', sourcemap: true, banner: banner, interop: 'auto', name: 'polygraph',
                 globals: {
+                    'rbush': 'rbush',
                     'ol': 'ol',
                     'ol/proj': 'ol.proj',
                     'ol/extent': 'ol.extent',

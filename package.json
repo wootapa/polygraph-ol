@@ -1,6 +1,6 @@
 {
   "name": "@wootapa/polygraph-ol",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Extension of @wootapa/polygraph for OpenLayers.",
   "types": "dist/polygraph.ol.d.ts",
   "main": "dist/polygraph.umd.js",
