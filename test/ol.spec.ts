@@ -5,7 +5,7 @@ import GeoJSON from 'ol/format/GeoJSON';
 import WKT from 'ol/format/WKT';
 import LineString from 'ol/geom/LineString';
 import Point from 'ol/geom/Point';
-import { fromExtent } from 'ol/geom/Polygon';
+import Polygon, { fromExtent } from 'ol/geom/Polygon';
 import { and, defaultProjection, fromJson } from '../src/polygraph.ol';
 
 defaultProjection('EPSG:3857');
@@ -25,13 +25,15 @@ const polyFeatureJSONObject = formatJSON.writeFeatureObject(polyFeature);
 const polyFeatureJSONObjectString = JSON.stringify(polyFeatureJSONObject);
 const polyFeatureWKT = formatWKT.writeFeature(polyFeature);
 const polyFeatureProperties = polyFeature.getProperties();
+const polyTriangle = new Polygon([[getCenter(poly.getExtent()), getTopLeft(polyExtent), getBottomRight(polyExtent), getCenter(poly.getExtent())]]);
 const pointCenter = new Point(getCenter(poly.getExtent()));
-const lineCrosses = new LineString([getTopLeft(polyExtent), getBottomRight(polyExtent)]);
+const lineCrosses = new LineString([getTopLeft(polyExtent), getCenter(poly.getExtent()), getBottomRight(polyExtent)]);
 
 describe('ol', () => {
     it('polys of different formats intersects', () => {
         const result = and()
             .intersects(polyExtent)
+            .intersects(polyTriangle)
             .intersects(polyFunction)
             .intersects(poly)
             .intersects(polyCoords)
@@ -45,6 +47,15 @@ describe('ol', () => {
             .intersects(polyFeatureProperties)
             .done()
             .evaluate(polyFeature);
+
+        expect(result).true;
+    });
+
+    it('turf intersection', () => {
+        const result = and()
+            .intersects(polyTriangle)
+            .done()
+            .evaluate(lineCrosses);
 
         expect(result).true;
     });
