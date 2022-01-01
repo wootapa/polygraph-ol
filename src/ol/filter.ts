@@ -20,8 +20,8 @@ export class WAFilter {
         switch (proj.getUnits()) {
             case Units.DEGREES: {
                 // https://stackoverflow.com/a/25237446
-                const latlon = getCenter(WAFeature.transform(geom, sourceProj, proj).getExtent());
-                return meters / (proj.getMetersPerUnit() * Math.cos(latlon[1] * (Math.PI / 180)));
+                const [, lat] = getCenter(WAFeature.transform(geom, sourceProj, proj).getExtent());
+                return meters / (proj.getMetersPerUnit() * Math.cos(lat * (Math.PI / 180)));
             }
             default: {
                 return meters / proj.getMetersPerUnit();
@@ -34,7 +34,7 @@ export class WAFilter {
             // Openlayers
             if (operator instanceof OlBase) {
                 const property = opts?.geometryName ?? operator.key;
-                const value = opts?.projection
+                let value = opts?.projection
                     ? operator.feature.asWkt(opts?.decimals, { sourceProj: operator.opts.polygraphOpts.projCode, targetProj: opts.projection })
                     : operator.feature.asWkt(opts?.decimals);
 
@@ -51,24 +51,18 @@ export class WAFilter {
                     return `WITHIN(${property}, ${value})`;
                 }
                 if (operator instanceof OlDistanceBase) {
-                    let distance = operator.opts.distance;
-
-                    /*
-                        Geoserver implements the interface but ignores the provided units
-                        Here we transform meters to the unit of the target projection
-                    */
-                    if (opts?.useProjectionUnitForDistance) {
-                        const sourceProj = operator.opts.polygraphOpts.projCode;
-                        const targetProj = opts?.projection ?? sourceProj;
-                        const geom = operator.feature.getGeometry();
-                        distance = WAFilter.metersToUnit(geom, sourceProj, targetProj, distance);
-                    }
+                    // https://stackoverflow.com/a/67897648
+                    const distance = operator.opts.distance;
+                    const sourceProj = operator.opts.polygraphOpts.projCode;
+                    const targetProj = opts?.projection ?? sourceProj;
+                    const sphere = WAFeature.distanceSphere(operator.feature.getCenter(), sourceProj, distance);
+                    value = WAFeature.factory(sphere).asWkt(opts?.decimals, { sourceProj, targetProj });
 
                     if (operator instanceof OlDistanceWithin) {
-                        return `DWITHIN(${property}, ${value}, ${distance}, meters)`;
+                        return `INTERSECTS(${property}, ${value})`;
                     }
                     if (operator instanceof OlDistanceBeyond) {
-                        return `BEYOND(${property}, ${value}, ${distance}, meters)`;
+                        return `DISJOINT(${property}, ${value})`;
                     }
                 }
             }
@@ -128,7 +122,7 @@ export class WAFilter {
             // Openlayers
             if (operator instanceof OlBase) {
                 const property = `<ogc:PropertyName>${opts?.geometryName ?? operator.key}</ogc:PropertyName>`;
-                const value = opts?.projection
+                let value = opts?.projection
                     ? operator.feature.asGml(opts?.decimals, { sourceProj: operator.opts.polygraphOpts.projCode, targetProj: opts.projection })
                     : operator.feature.asGml(opts?.decimals);
 
@@ -145,26 +139,18 @@ export class WAFilter {
                     return `<ogc:Within>${property}${value}</ogc:Within>`;
                 }
                 if (operator instanceof OlDistanceBase) {
-                    let distance = operator.opts.distance;
-
-                    /*
-                        Geoserver implements the interface but ignores the provided units
-                        Here we transform meters to the unit of the target projection
-                    */
-                    if (opts?.useProjectionUnitForDistance) {
-                        const sourceProj = operator.opts.polygraphOpts.projCode;
-                        const targetProj = opts?.projection ?? sourceProj;
-                        const geom = operator.feature.getGeometry();
-                        distance = WAFilter.metersToUnit(geom, sourceProj, targetProj, distance);
-                    }
-
-                    const distanceTag = `<Distance units="meter">${distance}</Distance>`;
+                    // https://stackoverflow.com/a/67897648
+                    const distance = operator.opts.distance;
+                    const sourceProj = operator.opts.polygraphOpts.projCode;
+                    const targetProj = opts?.projection ?? sourceProj;
+                    const sphere = WAFeature.distanceSphere(operator.feature.getCenter(), sourceProj, distance);
+                    value = WAFeature.factory(sphere).asGml(opts?.decimals, { sourceProj, targetProj });
 
                     if (operator instanceof OlDistanceWithin) {
-                        return `<ogc:DWithin>${property}${value}${distanceTag}</ogc:DWithin>`;
+                        return `<ogc:Intersects>${property}${value}</ogc:Intersects>`;
                     }
                     if (operator instanceof OlDistanceBeyond) {
-                        return `<ogc:Beyond>${property}${value}${distanceTag}</ogc:Beyond>`;
+                        return `<ogc:Disjoint>${property}${value}</ogc:Disjoint>`;
                     }
                 }
             }

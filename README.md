@@ -44,7 +44,6 @@ CQL/XML serializers take an optional object:
 geometryName?, // Serializes operators with a different geometryName. Ex 'the_geom'.
 projection?, // Serializes operators with a different projection. Ex 'EPSG:4326'.
 decimals? // Rounds geometry decimal precision on serialized operators. Ex, 5.
-useProjectionUnitForDistance? // Some backends ignores the unit part of dwithin/beyond filters. This converts meters to the unit of the projection.
 ```
 
 ## Geometrylike objects

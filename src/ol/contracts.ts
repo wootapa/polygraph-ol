@@ -22,9 +22,7 @@ export interface IDistanceOpts extends IOlOpts {
 export interface IFilterOpts {
     geometryName?: string,
     projection?: ProjectionLike,
-    decimals?: number,
-    // Will convert meters to projection units when using dwithin/beyond
-    useProjectionUnitForDistance?: boolean
+    decimals?: number
 }
 
 export interface ITransformOpts {

@@ -13,8 +13,8 @@ import MultiLineString from 'ol/geom/MultiLineString';
 import MultiPoint from 'ol/geom/MultiPoint';
 import MultiPolygon from 'ol/geom/MultiPolygon';
 import Point from 'ol/geom/Point';
-import Polygon, { fromCircle, fromExtent } from 'ol/geom/Polygon';
-import { ProjectionLike } from 'ol/proj';
+import Polygon, { circular, fromCircle, fromExtent } from 'ol/geom/Polygon';
+import { ProjectionLike, toLonLat } from 'ol/proj';
 import { getDistance } from 'ol/sphere';
 import { IDictionary } from '../core/contracts';
 import { FeatureThing, ITransformOpts } from './contracts';
@@ -109,6 +109,12 @@ export class WAFeature {
         }
         // Could in theory be topologically different and produce the same area
         return poly.getArea() === polyExtent.getArea();
+    }
+
+    static distanceSphere(coordinate: Coordinate, projection: ProjectionLike, distance: number, vertices = 64): Geometry {
+        const [lon, lat] = toLonLat(coordinate, projection);
+        const circle4326 = circular([lon, lat], distance, vertices);
+        return WAFeature.transform(circle4326, WAFeature.WGS84_CODE, projection);
     }
 
     assertValid(): WAFeature {
@@ -241,6 +247,7 @@ export class WAFeature {
         });
     }
 
+    // Not accurate when source != Point
     dwithin(feature: WAFeature, distance: number, greatCircle = true, projCode: string): boolean {
         let thisGeom = this.getGeometry();
         let featGeom = feature.getGeometry();
