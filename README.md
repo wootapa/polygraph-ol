@@ -7,15 +7,19 @@ See [demo](https://wootapa.github.io/polygraph-ol-demo/) with WFS/WMS side by si
 
 ## Installation
 
-New browsers and bundlers (es):
+Modern browsers and bundlers (es):
 ```shell
 $ npm install --save @wootapa/polygraph-ol
 ```
+```typescript
+import { Polygraph } from '@wootapa/polygraph-ol';
+// Polygraph.and()... (types included)
+```
 
-Old browsers (umd):
+Legacy (umd):
 ```javascript
 <script src="https://unpkg.com/@wootapa/polygraph-ol"></script>
-// polygraph.and() ...
+// polygraph.and()...
 ```
 
 ## Methods
