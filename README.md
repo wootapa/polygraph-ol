@@ -1,7 +1,5 @@
 # Polygraph - OpenLayers
-This is an extension of https://github.com/wootapa/polygraph with spatial operators and is intended to be used with [Features](https://openlayers.org/en/latest/apidoc/module-ol_Feature-Feature.html) or geometrylike objects. It also supports serialization into CQL/XML to be used by an OGC compliant server, such as Geoserver.
-
-In short, features can be filtered directly in the client, or the server, using the same instance of Polygraph.
+This is an extension of https://github.com/wootapa/polygraph with spatial operators for OpenLayers 7+. Use it to evaluate features/geometries (or geometrylike objects) or serialize into CQL/XML to be used by an OGC compliant server, such as Geoserver...all using the same instance of Polygraph.
 
 See [demo](https://wootapa.github.io/polygraph-ol-demo/) with WFS/WMS side by side.
 
@@ -65,7 +63,7 @@ So maybe you have a bunch of features and you need all wells.
 ```javascript
 const q = and().eq('type', 'well').done();
 ```
-You figure the depth must at least 32 meters
+You figure the depth must be at least 32 meters
 ```javascript
 q.gte('depth', 32).done()
 ```

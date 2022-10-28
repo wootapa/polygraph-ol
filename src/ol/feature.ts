@@ -1,3 +1,4 @@
+
 import booleanIntersects from '@turf/boolean-intersects';
 import { Feature } from 'ol';
 import { Coordinate } from 'ol/coordinate';
@@ -7,7 +8,6 @@ import GML3 from 'ol/format/GML3';
 import WKT from 'ol/format/WKT';
 import Circle from 'ol/geom/Circle';
 import Geometry from 'ol/geom/Geometry';
-import GeometryLayout from 'ol/geom/GeometryLayout';
 import LineString from 'ol/geom/LineString';
 import MultiLineString from 'ol/geom/MultiLineString';
 import MultiPoint from 'ol/geom/MultiPoint';
@@ -21,7 +21,8 @@ import { FeatureThing, ITransformOpts } from './contracts';
 
 const formatWkt = new WKT();
 const formatJson = new GeoJSON();
-const formatGml = new GML3();
+const formatGml = new GML3({ featureNS: 'https:/foo'});
+type Format = 'gml' | 'json' | 'wkt' | 'turf';
 
 export class WAFeature {
     constructor(private _feature: Feature<Geometry>) { }
@@ -47,7 +48,7 @@ export class WAFeature {
             if (obj.length > 0 && obj.length % 2 === 0) {
                 // Point?
                 if (obj.length == 2) {
-                    return new WAFeature(new Feature(new Point(obj, GeometryLayout.XY)));
+                    return new WAFeature(new Feature(new Point(obj, 'XY')));
                 }
                 // Extent->Polygon?
                 if (obj.length == 4) {
@@ -55,15 +56,15 @@ export class WAFeature {
                 }
                 // LineString?
                 if (obj.length == 6) {
-                    return new WAFeature(new Feature(new LineString(obj, GeometryLayout.XY)));
+                    return new WAFeature(new Feature(new LineString(obj, 'XY')));
                 }
                 // Polygon or LineString?
                 const [headX, headY] = obj.slice(0, 2);
                 const [tailX, tailY] = obj.slice(-2);
                 if (headX === tailX && headY === tailY) {
-                    return new WAFeature(new Feature(new Polygon(obj, GeometryLayout.XY, [obj.length])));
+                    return new WAFeature(new Feature(new Polygon(obj, 'XY', [obj.length])));
                 }
-                return new WAFeature(new Feature(new LineString(obj, GeometryLayout.XY)));
+                return new WAFeature(new Feature(new LineString(obj, 'XY')));
             }
         }
         else if (obj instanceof Object) {
@@ -75,8 +76,8 @@ export class WAFeature {
             // Resolving from polygraph?
             const candidate = Object.entries(obj).find(([, v]) => v instanceof Geometry);
             if (candidate) {
-                const [key, geometry] = candidate;
                 const feature = new Feature(obj);
+                const [key, geometry]: [string, Geometry] = candidate;
                 feature.setGeometryName(key);
                 feature.setGeometry(geometry);
                 return new WAFeature(feature).assertValid();
@@ -85,7 +86,7 @@ export class WAFeature {
             return new WAFeature(formatJson.readFeature(obj)).assertValid();
         }
         else if (typeof (obj) === 'string') {
-            switch (obj.trimLeft().charAt(0)) {
+            switch (obj.trimStart().charAt(0)) {
                 case '{': return new WAFeature(formatJson.readFeature(obj)).assertValid();
                 default: return new WAFeature(formatWkt.readFeature(obj)).assertValid();
             }
@@ -122,18 +123,19 @@ export class WAFeature {
         if (!(geom instanceof Geometry)) {
             throw new Error('Not a valid geometry');
         }
-        if (geom instanceof Circle) {
-            this._feature.setGeometry(fromCircle(geom));
-        }
         return this;
     }
 
     getGeometry(): Geometry {
-        return this._feature.getGeometry();
+        const geom = this._feature.getGeometry();
+
+        return geom instanceof Circle
+            ? fromCircle(geom)
+            : geom;
     }
 
     getGeometryAsArray(): Geometry[] {
-        const geom = this._feature.getGeometry();
+        const geom = this.getGeometry();
         if (geom instanceof MultiPoint) {
             return geom.getPoints();
         }
@@ -179,29 +181,34 @@ export class WAFeature {
         return this._feature;
     }
 
-    asWkt(decimals?: number, opts?: ITransformOpts): string {
+    private serialize(format: Format, opts?: ITransformOpts, decimals?: number) {
         const geom = opts
             ? this.getGeometryTransformed(opts.sourceProj, opts.targetProj)
             : this.getGeometry();
-        return formatWkt.writeGeometry(geom, { decimals: decimals });
+
+        switch (format) {
+            case 'wkt': return formatWkt.writeGeometry(geom, { decimals: decimals });
+            case 'json': return formatJson.writeGeometry(geom, { decimals: decimals });
+            case 'turf': return formatJson.writeGeometryObject(geom) as any;
+            case 'gml': return formatGml.writeGeometry(geom, { decimals: decimals });
+        }
+    }
+
+    asWkt(decimals?: number, opts?: ITransformOpts): string {
+        return this.serialize('wkt', opts, decimals);
     }
 
     asGeoJson(decimals?: number, opts?: ITransformOpts): string {
-        const geom = opts
-            ? this.getGeometryTransformed(opts.sourceProj, opts.targetProj)
-            : this.getGeometry();
-        return formatJson.writeGeometry(geom, { decimals: decimals });
+        return this.serialize('json', opts, decimals);
     }
 
     asTurf(projCode: string): any {
-        return formatJson.writeGeometryObject(this.getGeometryTransformed(projCode, WAFeature.WGS84_CODE)) as any;
+        const opts = { sourceProj: projCode, targetProj: WAFeature.WGS84_CODE };
+        return this.serialize('turf', opts) as any;
     }
 
     asGml(decimals?: number, opts?: ITransformOpts): string {
-        const geom = opts
-            ? this.getGeometryTransformed(opts.sourceProj, opts.targetProj)
-            : this.getGeometry();
-        return formatGml.writeGeometry(geom, { decimals: decimals });
+        return this.serialize('gml', opts, decimals);
     }
 
     intersects(feature: WAFeature, projCode: string): boolean {

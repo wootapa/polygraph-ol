@@ -1,7 +1,6 @@
 import { getCenter } from 'ol/extent';
 import Geometry from 'ol/geom/Geometry';
 import { get, ProjectionLike } from 'ol/proj';
-import Units from 'ol/proj/Units';
 import { Comparison, ComparisonEquals, ComparisonGreaterThan, ComparisonGreaterThanEquals, ComparisonIsNull, ComparisonLessThan, ComparisonLessThanEquals, ComparisonLike } from '../core/comparison';
 import { Operator } from '../core/contracts';
 import { Logical, LogicalAnd, LogicalNot, LogicalOr } from '../core/logical';
@@ -18,7 +17,7 @@ export class WAFilter {
     static metersToUnit = (geom: Geometry, sourceProj: ProjectionLike, targetProj: ProjectionLike, meters: number): number => {
         const proj = get(targetProj);
         switch (proj.getUnits()) {
-            case Units.DEGREES: {
+            case 'degrees': {
                 // https://stackoverflow.com/a/25237446
                 const [, lat] = getCenter(WAFeature.transform(geom, sourceProj, proj).getExtent());
                 return meters / (proj.getMetersPerUnit() * Math.cos(lat * (Math.PI / 180)));

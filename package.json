@@ -1,7 +1,7 @@
 {
   "name": "@wootapa/polygraph-ol",
-  "version": "1.0.5",
-  "description": "Extension of @wootapa/polygraph for OpenLayers.",
+  "version": "1.0.7",
+  "description": "Extension of @wootapa/polygraph for OpenLayers 7+.",
   "types": "dist/polygraph.ol.d.ts",
   "main": "dist/polygraph.umd.js",
   "unpkg": "dist/polygraph.umd.js",
@@ -9,8 +9,8 @@
   "browser": "dist/polygraph.esm.js",
   "scripts": {
     "start": "npm run build",
-    "lint": "eslint --fix --ext .ts ./src && eslint --fix --ext .ts ./test",
-    "test": "mocha -r performance-now -r esm -r jsdom-global/register -r ts-node/register test/*.spec.ts",
+    "lint": "eslint --ext .ts ./src",
+    "test": "jest",
     "build": "npm run lint && rollup -c"
   },
   "files": [
@@ -46,33 +46,30 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.1.1",
-    "@types/chai": "^4.3.0",
     "@types/color-name": "^1.1.1",
+    "@types/jest": "^29.1.2",
     "@types/jsdom": "^16.2.14",
-    "@types/mocha": "^8.0.0",
     "@types/ol": "^6.3.1",
     "@typescript-eslint/eslint-plugin": "^5.8.1",
     "@typescript-eslint/parser": "^5.8.1",
-    "chai": "^4.3.4",
     "eslint": "^8.5.0",
     "eslint-config-typescript": "^3.0.0",
-    "esm": "^3.2.25",
-    "jsdom": "^19.0.0",
-    "jsdom-global": "^3.0.2",
-    "mocha": "^8.1.1",
-    "ol": "6.3.1",
+    "jest": "^29.1.2",
+    "jest-environment-jsdom": "^29.1.2",
+    "ol": "7.1.0",
     "rollup": "^2.62.0",
     "rollup-plugin-cleaner": "^1.0.0",
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.31.1",
-    "tslib": "^2.3.1",
+    "ts-jest": "^29.0.3",
     "ts-node": "^10.4.0",
-    "typescript": "^4.5.4"
+    "tslib": "^2.3.1",
+    "typescript": "^4.8.4"
   },
   "peerDependencies": {
-    "ol": ">= 6.0.0"
+    "ol": ">= 7.0.0"
   },
   "dependencies": {
     "@turf/boolean-intersects": "^6.5.0",

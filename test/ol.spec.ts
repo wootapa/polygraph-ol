@@ -1,8 +1,12 @@
-import { expect } from 'chai';
+/**
+ * @jest-environment jsdom
+ */
+
 import { Feature } from 'ol';
 import { Extent, getBottomRight, getCenter, getTopLeft } from 'ol/extent';
 import GeoJSON from 'ol/format/GeoJSON';
 import WKT from 'ol/format/WKT';
+import { Circle, MultiPolygon } from 'ol/geom';
 import LineString from 'ol/geom/LineString';
 import Point from 'ol/geom/Point';
 import Polygon, { fromExtent } from 'ol/geom/Polygon';
@@ -27,6 +31,9 @@ const polyFeatureWKT = formatWKT.writeFeature(polyFeature);
 const polyFeatureProperties = polyFeature.getProperties();
 const polyTriangle = new Polygon([[getCenter(poly.getExtent()), getTopLeft(polyExtent), getBottomRight(polyExtent), getCenter(poly.getExtent())]]);
 const pointCenter = new Point(getCenter(poly.getExtent()));
+const pointOutside = new Point(getTopLeft(poly.getExtent()).map(c => c - 1));
+const multiPoly = new MultiPolygon([poly.clone(), polyTriangle.clone()]);
+const circleCenter = new Circle(getCenter(poly.getExtent()), 1);
 const lineCrosses = new LineString([getTopLeft(polyExtent), getCenter(poly.getExtent()), getBottomRight(polyExtent)]);
 
 describe('ol', () => {
@@ -34,6 +41,7 @@ describe('ol', () => {
         const result = and()
             .intersects(polyExtent)
             .intersects(polyTriangle)
+            .intersects(multiPoly)
             .intersects(polyFunction)
             .intersects(poly)
             .intersects(polyCoords)
@@ -48,7 +56,7 @@ describe('ol', () => {
             .done()
             .evaluate(polyFeature);
 
-        expect(result).true;
+        expect(result).toBe(true);
     });
 
     it('turf intersection', () => {
@@ -57,7 +65,7 @@ describe('ol', () => {
             .done()
             .evaluate(lineCrosses);
 
-        expect(result).true;
+        expect(result).toBe(true);
     });
 
     it('nondefault geometryname', () => {
@@ -69,7 +77,7 @@ describe('ol', () => {
             .done()
             .evaluate(polyFeatureCustomName);
 
-        expect(result).true;
+        expect(result).toBe(true);
     });
 
     it('point of poly centroid intersects', () => {
@@ -78,7 +86,16 @@ describe('ol', () => {
             .done()
             .evaluate(poly);
 
-        expect(result).true;
+        expect(result).toBe(true);
+    });
+
+    it('point of poly outside disjoints', () => {
+        const result = and()
+            .disjoint(pointOutside)
+            .done()
+            .evaluate(poly);
+
+        expect(result).toBe(true);
     });
 
     it('line crossing poly intersects', () => {
@@ -87,12 +104,13 @@ describe('ol', () => {
             .done()
             .evaluate(poly);
 
-        expect(result).true;
+        expect(result).toBe(true);
     });
 
     it('polygraph and json-polygraph evaluates same', () => {
         const polygraph1 = and()
             .intersects(lineCrosses)
+            .intersects(circleCenter)
             .disjoint(lineCrosses)
             .within(poly)
             .contains(poly)
@@ -104,7 +122,7 @@ describe('ol', () => {
 
         const result1 = polygraph1.evaluate(poly);
         const result2 = polygraph2.evaluate(poly);
-        expect(result1).eq(result2);
+        expect(result1).toBe(result2);
     });
 
     it('point is within poly', () => {
@@ -113,7 +131,16 @@ describe('ol', () => {
             .done();
 
         const result = polygraph.evaluate(pointCenter);
-        expect(result).true;
+        expect(result).toBe(true);
+    });
+
+    it('point is within circle', () => {
+        const polygraph = and()
+            .within(circleCenter)
+            .done();
+
+        const result = polygraph.evaluate(pointCenter);
+        expect(result).toBe(true);
     });
 
     it('poly contains point', () => {
@@ -122,7 +149,16 @@ describe('ol', () => {
             .done();
 
         const result = polygraph.evaluate(poly);
-        expect(result).true;
+        expect(result).toBe(true);
+    });
+
+    it('poly contains circle', () => {
+        const polygraph = and()
+            .contains(circleCenter)
+            .done();
+
+        const result = polygraph.evaluate(poly);
+        expect(result).toBe(true);
     });
 
     it('distance approximation', () => {
@@ -137,6 +173,23 @@ describe('ol', () => {
             .done();
 
         const result = polygraph.evaluate(p2);
-        expect(result).true;
+        expect(result).toBe(true);
+    });
+
+    it('serializable', () => {
+        const polygraph = and()
+            .intersects(lineCrosses)
+            .intersects(polyTriangle)
+            .disjoint(pointOutside)
+            .contains(circleCenter)
+            .within(multiPoly)
+            .distanceWithin(pointOutside, 10)
+            .done();
+
+        const cql = polygraph.asOgcCql();
+        expect(cql).toBeDefined();
+
+        const xml = polygraph.asOgcXml();
+        expect(xml).toBeDefined();
     });
 });
