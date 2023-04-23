@@ -45,7 +45,8 @@ CQL/XML serializers take an optional object:
 ```javascript
 geometryName?, // Serializes operators with a different geometryName. Ex 'the_geom'.
 projection?, // Serializes operators with a different projection. Ex 'EPSG:4326'.
-decimals? // Rounds geometry decimal precision on serialized operators. Ex, 5.
+decimals?, // Rounds geometry decimal precision on serialized operators. Ex, 5.
+eWkt? // Prepends wkt with current projection
 ```
 
 ## Geometrylike objects
@@ -75,7 +76,7 @@ It should also intersect the area of interest
 ```javascript
 q.intersects([13.8517, 55.9646, 14.3049, 56.1017]).done() // <- You have options what you pass here.
 ```
-In the end, this is the result.
+In the end, it could be written like this.
 ```javascript
 const q = and()
     .eq('type', 'well')

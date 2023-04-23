@@ -1,10 +1,10 @@
 import { getCenter } from 'ol/extent';
 import Geometry from 'ol/geom/Geometry';
-import { get, ProjectionLike } from 'ol/proj';
+import { get as getProjection, ProjectionLike } from 'ol/proj';
 import { Comparison, ComparisonEquals, ComparisonGreaterThan, ComparisonGreaterThanEquals, ComparisonIsNull, ComparisonLessThan, ComparisonLessThanEquals, ComparisonLike } from '../core/comparison';
 import { Operator } from '../core/contracts';
 import { Logical, LogicalAnd, LogicalNot, LogicalOr } from '../core/logical';
-import { IFilterOpts } from './contracts';
+import { ICqlFilterOpts, IFilterOpts } from './contracts';
 import { WAFeature } from './feature';
 import { OlBase, OlContains, OlDisjoint, OlDistanceBase, OlDistanceBeyond, OlDistanceWithin, OlIntersects, OlWithin } from './ol';
 
@@ -15,7 +15,7 @@ export class WAFilter {
     }
 
     static metersToUnit = (geom: Geometry, sourceProj: ProjectionLike, targetProj: ProjectionLike, meters: number): number => {
-        const proj = get(targetProj);
+        const proj = getProjection(targetProj);
         switch (proj.getUnits()) {
             case 'degrees': {
                 // https://stackoverflow.com/a/25237446
@@ -28,7 +28,7 @@ export class WAFilter {
         }
     }
 
-    static asOgcCql = (logical: Logical, opts?: IFilterOpts): string => {
+    static asOgcCql = (logical: Logical, opts?: ICqlFilterOpts): string => {
         const walk = (operator: Operator): string => {
             // Openlayers
             if (operator instanceof OlBase) {
@@ -36,6 +36,11 @@ export class WAFilter {
                 let value = opts?.projection
                     ? operator.feature.asWkt(opts?.decimals, { sourceProj: operator.opts.polygraphOpts.projCode, targetProj: opts.projection })
                     : operator.feature.asWkt(opts?.decimals);
+
+                if (opts?.eWkt) {
+                    const proj = getProjection(opts.projection ?? operator.opts.polygraphOpts.projCode);
+                    value = `SRID=${proj.getCode().split(':').pop()};${value}`;
+                }
 
                 if (operator instanceof OlIntersects) {
                     return `INTERSECTS(${property}, ${value})`;

@@ -2,7 +2,7 @@ import { ProjectionLike } from 'ol/proj';
 import Projection from 'ol/proj/Projection';
 import { ClassDict } from '../core/contracts';
 import { PolygraphBase } from '../core/polygraph';
-import { FeatureThing, IDistanceOpts, IPolygraphOlOpts, IFilterOpts } from './contracts';
+import { FeatureThing, IDistanceOpts, IPolygraphOlOpts, IFilterOpts, ICqlFilterOpts } from './contracts';
 import { WAFeature } from './feature';
 import { WAFilter } from './filter';
 import { IOlOperators, OlContains, OlDisjoint, OlDistanceBeyond, OlDistanceWithin, OlIntersects, OlWithin } from './ol';
@@ -170,7 +170,7 @@ export class PolygraphOl extends PolygraphBase<PolygraphOl> implements IOlOperat
      *
      * @returns OGC CQL query
      */
-    asOgcCql(opts?: IFilterOpts): string {
+    asOgcCql(opts?: ICqlFilterOpts): string {
         return WAFilter.asOgcCql(this._logical, opts);
     }
 

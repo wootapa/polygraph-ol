@@ -19,6 +19,10 @@ export interface IDistanceOpts extends IOlOpts {
     greatCircle: boolean
 }
 
+export interface ICqlFilterOpts extends IFilterOpts {
+    eWkt?: boolean
+}
+
 export interface IFilterOpts {
     geometryName?: string,
     projection?: ProjectionLike,
